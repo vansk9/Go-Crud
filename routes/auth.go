@@ -12,6 +12,7 @@ func SetupAuthRoutes(app *fiber.App) {
 	// Register & Login
 	api.Post("/register", controllers.Register)
 	api.Post("/login", controllers.Login)
+	
 
 	// Protected Route (Butuh Login)
 	api.Get("/protected", middleware.AuthMiddleware, func(c *fiber.Ctx) error {
