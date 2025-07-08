@@ -38,25 +38,22 @@
 //     return c.Next()
 // }
 
-
 package middleware
 
 import (
-	"github.com/gofiber/fiber/v2"
-	"github.com/golang-jwt/jwt/v4"
 	"os"
 	"strings"
+
+	"github.com/gofiber/fiber/v2"
+	"github.com/golang-jwt/jwt/v4"
 )
 
-// CustomClaims untuk JWT
 type CustomClaims struct {
 	UserID     uint   `json:"user_id"`
 	Email      string `json:"email"`
 	Permission string `json:"permission"`
 	jwt.StandardClaims
 }
-
-// Middleware untuk semua user (user & admin)
 func AuthMiddleware(c *fiber.Ctx) error {
 	authHeader := c.Get("Authorization")
 	if authHeader == "" {
@@ -77,14 +74,11 @@ func AuthMiddleware(c *fiber.Ctx) error {
 	if !ok {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"message": "Invalid claims"})
 	}
-
-	// Simpan user_id di Locals agar bisa diakses di handler berikutnya
 	c.Locals("user_id", claims.UserID)
 
 	return c.Next()
 }
 
-// Middleware khusus untuk admin
 func AdminOnly(c *fiber.Ctx) error {
 	authHeader := c.Get("Authorization")
 	if authHeader == "" {

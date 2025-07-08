@@ -1,10 +1,11 @@
 package database
 
 import (
-    "go-fiber-api/models"
+	"go-fiber-api/models"
 )
 
 func Migrate() {
-    DB.AutoMigrate(&models.User{}) // Ini akan otomatis menambahkan kolom baru jika belum ada
+    DB.AutoMigrate(&models.User{})
     DB.AutoMigrate(&models.CartItem{})
+    DB.AutoMigrate(&models.Product{})
 }

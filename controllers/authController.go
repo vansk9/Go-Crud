@@ -4,6 +4,7 @@ import (
 	"go-fiber-api/database"
 	"go-fiber-api/middleware"
 	"go-fiber-api/models"
+
 	"github.com/gofiber/fiber/v2"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -27,7 +28,7 @@ func Register(c *fiber.Ctx) error {
 	user := models.User{
 		Email:      data["email"],
 		Password:   string(hashedPassword),
-		Pin:        data["pin"],
+		Pin:       0, // Default pin
 		Permission: "user", // Default permission
 	}
 

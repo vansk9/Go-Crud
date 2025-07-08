@@ -1,27 +1,23 @@
 package middleware
 
 import (
-	// "github.com/gofiber/fiber/v2"
-	"github.com/golang-jwt/jwt/v4"
 	"os"
-	// "strings"
 	"time"
+
+	"github.com/golang-jwt/jwt/v4"
 )
 
-// Struct untuk JWT Custom Claims
 type Claims struct {
 	Email      string `json:"email"`
 	Permission string `json:"permission"`
 	jwt.RegisteredClaims
 }
-
-// Generate JWT Token dengan Permission
 func GenerateToken(email string, permission string) (string, error) {
 	claims := Claims{
 		Email:      email,
 		Permission: permission,
 		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)), // Token berlaku 24 jam
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
 		},
 	}
 

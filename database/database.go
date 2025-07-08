@@ -2,9 +2,9 @@ package database
 
 import (
 	"fmt"
+	"go-fiber-api/models"
 	"log"
 	"os"
-	"go-fiber-api/models"
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -13,28 +13,30 @@ import (
 var DB *gorm.DB
 
 func ConnectDB() {
-	// Ambil koneksi database dari environment variable
-	dsn := os.Getenv("DATABASE_URL")
-	if dsn == "" {
-		dsn = "host=localhost user=postgres password=miftah87 dbname=gol port=5432 sslmode=disable"
-	}
+	host := os.Getenv("DB_HOST")
+	user := os.Getenv("DB_USER")
+	password := os.Getenv("DB_PASSWORD")
+	dbName := os.Getenv("DB_NAME")
+	port := os.Getenv("DB_PORT")
+	sslmode := os.Getenv("DB_SSLMODE")
 
-	// Koneksi ke PostgreSQL
+
+	dsn := fmt.Sprintf(
+		"host=%s user=%s password=%s dbname=%s port=%s sslmode=%s",
+		host, user, password, dbName, port, sslmode,
+	)
 	var err error
 	DB, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
-		log.Fatal("❌ Gagal konek ke database:", err)
+		log.Fatalf("❌ Gagal konek ke database: %v", err)
 	}
 
-	fmt.Println("✅ Berhasil koneksi ke PostgreSQL")
+	fmt.Println("✅ Berhasil konek ke PostgreSQL")
 
-	// Migrasi tabel
 	fmt.Println("📦 Running migrations...")
-	err = DB.AutoMigrate(&models.User{}, &models.CartItem{}, &models.Product{})
+	err = DB.AutoMigrate(&models.User{}, &models.Product{}, &models.CartItem{})
 	if err != nil {
-		log.Fatal("❌ Gagal migrasi database:", err)
+		log.Fatalf("❌ Gagal migrasi database: %v", err)
 	}
 	fmt.Println("✅ Migrations completed!")
 }
-
-
