@@ -4,8 +4,8 @@ import "gorm.io/gorm"
 
 type User struct {
 	gorm.Model
+	Name       string `gorm:"not null"`
 	Email      string `gorm:"unique;not null"`
 	Password   string `gorm:"not null"`
-	Pin        int    `gorm:"default:0"`              
-	Permission string `gorm:"type:varchar(10);default:user"`
+	Permission string `gorm:"default:'user'"`
 }

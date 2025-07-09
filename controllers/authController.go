@@ -4,6 +4,7 @@ import (
 	"go-fiber-api/database"
 	"go-fiber-api/middleware"
 	"go-fiber-api/models"
+	"strings"
 
 	"github.com/gofiber/fiber/v2"
 	"golang.org/x/crypto/bcrypt"
@@ -11,33 +12,61 @@ import (
 
 // Register User
 func Register(c *fiber.Ctx) error {
-	var data map[string]string
+	// Gunakan struct untuk parsing yang lebih aman
+	type RegisterInput struct {
+		Name     string `json:"name"`
+		Email    string `json:"email"`
+		Password string `json:"password"`
+	}
 
-	// Parsing request body
-	if err := c.BodyParser(&data); err != nil {
+	var input RegisterInput
+	if err := c.BodyParser(&input); err != nil {
 		return c.Status(400).JSON(fiber.Map{"message": "Invalid request"})
 	}
 
-	// Hash password sebelum disimpan
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(data["password"]), 14)
+	// Validasi input
+	if input.Name == "" || input.Email == "" || input.Password == "" {
+		return c.Status(400).JSON(fiber.Map{"message": "All fields are required"})
+	}
+
+	// Cek email sudah terdaftar
+	var existingUser models.User
+	if err := database.DB.Where("email = ?", input.Email).First(&existingUser).Error; err == nil {
+		return c.Status(400).JSON(fiber.Map{"message": "Email already registered"})
+	}
+
+	// Hash password
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(input.Password), 14)
 	if err != nil {
-		return c.Status(500).JSON(fiber.Map{"message": "Gagal mengenkripsi password"})
+		return c.Status(500).JSON(fiber.Map{"message": "Failed to encrypt password"})
 	}
 
-	// Set default permission sebagai "user"
+	// Buat user baru dengan name
 	user := models.User{
-		Email:      data["email"],
+		Name:       input.Name, // Tambahkan name
+		Email:      input.Email,
 		Password:   string(hashedPassword),
-		Pin:       0, // Default pin
-		Permission: "user", // Default permission
+		Permission: "user",
+		// Pin: 0, // Bisa dihapus jika tidak digunakan
 	}
 
-	// Simpan user ke database
+	// Simpan ke database
 	if err := database.DB.Create(&user).Error; err != nil {
-		return c.Status(500).JSON(fiber.Map{"message": "Gagal mendaftarkan user"})
+		// Handle error duplikat email lebih spesifik
+		if strings.Contains(err.Error(), "duplicate key") {
+			return c.Status(400).JSON(fiber.Map{"message": "Email already registered"})
+		}
+		return c.Status(500).JSON(fiber.Map{"message": "Failed to register user"})
 	}
 
-	return c.JSON(fiber.Map{"message": "User berhasil didaftarkan"})
+	return c.JSON(fiber.Map{
+		"message": "User registered successfully",
+		"user": fiber.Map{
+			"id":    user.ID,
+			"name":  user.Name,
+			"email": user.Email,
+		},
+	})
 }
 
 // Login User
