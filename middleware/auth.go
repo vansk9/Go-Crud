@@ -8,14 +8,13 @@ import (
 )
 
 type Claims struct {
-	Email      string `json:"email"`
-	Permission string `json:"permission"`
+	Email string `json:"email"`
 	jwt.RegisteredClaims
 }
+
 func GenerateToken(email string, permission string) (string, error) {
 	claims := Claims{
-		Email:      email,
-		Permission: permission,
+		Email: email,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
 		},
@@ -24,8 +23,6 @@ func GenerateToken(email string, permission string) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	return token.SignedString([]byte(os.Getenv("JWT_SECRET")))
 }
-
-
 
 // // Middleware untuk validasi token dan mendapatkan user role
 // func AuthMiddleware(c *fiber.Ctx) error {
