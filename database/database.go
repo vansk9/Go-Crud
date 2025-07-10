@@ -20,7 +20,6 @@ func ConnectDB() {
 	port := os.Getenv("DB_PORT")
 	sslmode := os.Getenv("DB_SSLMODE")
 
-
 	dsn := fmt.Sprintf(
 		"host=%s user=%s password=%s dbname=%s port=%s sslmode=%s",
 		host, user, password, dbName, port, sslmode,
@@ -34,7 +33,7 @@ func ConnectDB() {
 	fmt.Println("✅ Berhasil konek ke PostgreSQL")
 
 	fmt.Println("📦 Running migrations...")
-	err = DB.AutoMigrate(&models.User{}, &models.Product{}, &models.CartItem{})
+	err = DB.AutoMigrate(&models.User{})
 	if err != nil {
 		log.Fatalf("❌ Gagal migrasi database: %v", err)
 	}

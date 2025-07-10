@@ -1,21 +1,12 @@
 version: '3.8'
-
 services:
-  postgres:
-    image: postgres:15
-    container_name: postgres_db
-    restart: always
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: firgiawan3
-      POSTGRES_DB: gooo
+  go-crud:
+    build: .
     ports:
-      - "5432:5432"
+      - "8080:8080"  # Sesuaikan dengan port aplikasi
+    restart: unless-stopped
     volumes:
-      - postgres_data:/var/lib/postgresql/data
-    networks:
-      - app-network
-
+      - ./data:/app/data  # Jika perlu volume
 volumes:
   postgres_data:
 
