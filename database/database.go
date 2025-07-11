@@ -2,7 +2,6 @@ package database
 
 import (
 	"fmt"
-	"go-fiber-api/models"
 	"log"
 	"os"
 
@@ -24,6 +23,7 @@ func ConnectDB() {
 		"host=%s user=%s password=%s dbname=%s port=%s sslmode=%s",
 		host, user, password, dbName, port, sslmode,
 	)
+
 	var err error
 	DB, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
@@ -31,11 +31,4 @@ func ConnectDB() {
 	}
 
 	fmt.Println("✅ Berhasil konek ke PostgreSQL")
-
-	fmt.Println("📦 Running migrations...")
-	err = DB.AutoMigrate(&models.User{})
-	if err != nil {
-		log.Fatalf("❌ Gagal migrasi database: %v", err)
-	}
-	fmt.Println("✅ Migrations completed!")
 }

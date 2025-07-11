@@ -1,11 +1,11 @@
 package database
 
 import (
-	"go-fiber-api/models"
+	"go-fiber-api/internal/app/user/model"
 )
 
 func Migrate() {
-    DB.AutoMigrate(&models.User{})
-    DB.AutoMigrate(&models.CartItem{})
-    DB.AutoMigrate(&models.Product{})
+	DB.AutoMigrate(&model.User{})
+	// DB.AutoMigrate(&model.CartItem{})
+	// DB.AutoMigrate(&model.Product{})
 }
