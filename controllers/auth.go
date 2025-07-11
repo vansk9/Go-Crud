@@ -24,6 +24,10 @@ func Register(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, "Semua field wajib diisi")
 	}
 
+	if len(body.Password) < 8 {
+		return fiber.NewError(fiber.StatusInternalServerError, "minimal 8 karakter")
+	}
+
 	hashed, err := utils.HashPassword(body.Password)
 	if err != nil {
 		return fiber.ErrInternalServerError
