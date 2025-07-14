@@ -4,7 +4,7 @@ import (
 	"context"
 	"go-fiber-api/internal/app/user/model"
 
-	"gorm.io/gorm"
+	"github.com/jmoiron/sqlx"
 )
 
 type User interface {
@@ -13,10 +13,10 @@ type User interface {
 }
 
 type userRepo struct {
-	db *gorm.DB
+	db *sqlx.DB
 }
 
-func NewUserRepository(db *gorm.DB) User {
+func NewUserRepository(db *sqlx.DB) User {
 	return &userRepo{
 		db: db,
 	}
@@ -24,12 +24,32 @@ func NewUserRepository(db *gorm.DB) User {
 
 func (r *userRepo) FindByEmail(ctx context.Context, email string) (*model.User, error) {
 	var user model.User
-	if err := r.db.WithContext(ctx).Where("email = ?", email).First(&user).Error; err != nil {
+	query := `SELECT * FROM users WHERE email = $1 LIMIT 1`
+	err := r.db.GetContext(ctx, &user, query, email)
+	if err != nil {
 		return nil, err
 	}
 	return &user, nil
 }
 
 func (r *userRepo) Create(ctx context.Context, user *model.User) error {
-	return r.db.WithContext(ctx).Create(user).Error
+	query := `
+		INSERT INTO users (username, email, password, phone_number, date_of_birth, role)
+		VALUES (:username, :email, :password, :phone_number, :date_of_birth, :role)
+		RETURNING id
+	`
+
+	rows, err := r.db.NamedQueryContext(ctx, query, user)
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+
+	if rows.Next() {
+		if err := rows.Scan(&user.ID); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

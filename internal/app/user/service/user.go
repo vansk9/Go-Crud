@@ -7,6 +7,7 @@ import (
 	"go-fiber-api/internal/app/user/repository"
 	"go-fiber-api/internal/shared/dto"
 	"go-fiber-api/utils"
+	"log/slog"
 	"strings"
 )
 
@@ -60,26 +61,40 @@ func (s *userService) Register(ctx context.Context, req *dto.RegisterRequest) (*
 }
 
 func (s *userService) Login(ctx context.Context, req *dto.LoginRequest) (*dto.LoginResponse, error) {
+	slog.Info("Login attempt", "email", req.Email)
+
 	user, err := s.repo.FindByEmail(ctx, req.Email)
-	if err != nil || user == nil {
+	if err != nil {
+		slog.Warn("User not found during login", "email", req.Email, "error", err)
+		return nil, errors.New("email atau password salah")
+	}
+	if user == nil {
+		slog.Warn("Email tidak ditemukan", "email", req.Email)
 		return nil, errors.New("email atau password salah")
 	}
 
 	if err := utils.CheckPassword(req.Password, user.Password); err != nil {
+		slog.Warn("Password salah", "email", req.Email)
 		return nil, errors.New("email atau password salah")
 	}
 
-	token, err := utils.GenerateJWT(user.ID, user.Role)
+	// Pastikan ID-nya bertipe uint (jika dari DB bertipe int64)
+	userID := uint(user.ID)
+
+	token, err := utils.GenerateJWT(userID, user.Role)
 	if err != nil {
+		slog.Error("Gagal generate JWT", "user_id", userID, "error", err)
 		return nil, errors.New("gagal membuat token")
 	}
+
+	slog.Info("Login sukses", "user_id", userID, "role", user.Role)
 
 	return &dto.LoginResponse{
 		Token: token,
 		User: dto.UserResponse{
 			ID:          user.ID,
 			Username:    user.Username,
-			Email:       user.Email,
+			Email:       strings.ToLower(user.Email),
 			PhoneNumber: user.PhoneNumber,
 			DateOfBirth: user.DateOfBirth,
 			Role:        user.Role,

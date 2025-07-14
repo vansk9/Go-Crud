@@ -15,6 +15,11 @@ type JWTClaims struct {
 }
 
 func GenerateJWT(userID uint, role int) (string, error) {
+	secret := os.Getenv("JWT_SECRET")
+	if secret == "" {
+		return "", errors.New("JWT_SECRET tidak ditemukan di environment")
+	}
+
 	claims := JWTClaims{
 		UserID: userID,
 		Role:   role,
@@ -25,7 +30,6 @@ func GenerateJWT(userID uint, role int) (string, error) {
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	secret := os.Getenv("JWT_SECRET")
 	return token.SignedString([]byte(secret))
 }
 
