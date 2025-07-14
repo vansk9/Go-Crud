@@ -101,22 +101,30 @@ func (u *user) register(w http.ResponseWriter, r *http.Request) {
 }
 
 func (u *user) login(w http.ResponseWriter, r *http.Request) {
+	slog.Info("Login handler masuk") // <-- log masuk handler
+
 	var req dto.LoginRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		slog.Error("Gagal decode body", "error", err)
 		web.Err(w, web.NewHTTPError(http.StatusBadRequest, "Invalid request body", 1001))
 		return
 	}
 
+	slog.Info("Validasi input login") // <-- log validasi
+
 	if err := web.Validator().Struct(&req); err != nil {
+		slog.Error("Gagal validasi input", "error", err)
 		web.Err(w, err)
 		return
 	}
 
 	res, err := u.userService.Login(r.Context(), &req)
 	if err != nil {
+		slog.Error("Login gagal", "error", err)
 		web.Err(w, web.NewHTTPError(http.StatusUnauthorized, err.Error(), 1002))
 		return
 	}
 
+	slog.Info("Login sukses", "user", res.User.Email)
 	web.OK(w, http.StatusOK, res)
 }
