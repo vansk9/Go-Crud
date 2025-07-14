@@ -52,9 +52,8 @@ func main() {
 
 	// Jalankan server
 	port := os.Getenv("PORT")
-	if port == "" {
-		port = "3000"
-	}
+	log.Printf("Listening on port %s", port)
+	log.Fatal(http.ListenAndServe(":"+port, mux))
 
 	log.Printf("🚀 Server running on :%s\n", port)
 	log.Fatal(http.ListenAndServe(":"+port, mux))
