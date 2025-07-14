@@ -1,12 +1,27 @@
-FROM golang:1.23.0-alpine AS builder
+# Stage 1 - Build
+FROM golang:1.23-alpine AS builder
+
 
 WORKDIR /app
-COPY . .
+
+# Copy go mod & download deps
+COPY go.mod go.sum ./
 RUN go mod download
-RUN go build -o main .
 
+# Copy semua source code
+COPY . .
+
+# Build dari file yang ada di folder cmd
+RUN go build -o main ./cmd/main.go
+
+# Stage 2 - Runtime
 FROM alpine:latest
+
 WORKDIR /app
+
 COPY --from=builder /app/main .
+
+ENV PORT=8080
 EXPOSE 8080
+
 CMD ["./main"]
