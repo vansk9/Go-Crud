@@ -2,40 +2,37 @@ package database
 
 import (
 	"fmt"
-	"go-fiber-api/models"
 	"log"
 	"os"
 
-	"gorm.io/driver/postgres"
-	"gorm.io/gorm"
+	"github.com/jmoiron/sqlx"
+	_ "github.com/lib/pq"
 )
 
-var DB *gorm.DB
+var DB *sqlx.DB
 
 func ConnectDB() {
-	host := os.Getenv("DB_HOST")
-	user := os.Getenv("DB_USER")
-	password := os.Getenv("DB_PASSWORD")
-	dbName := os.Getenv("DB_NAME")
-	port := os.Getenv("DB_PORT")
-	sslmode := os.Getenv("DB_SSLMODE")
+	env := os.Getenv("ENV")
+	dsn := buildDSN(env)
 
-	dsn := fmt.Sprintf(
-		"host=%s user=%s password=%s dbname=%s port=%s sslmode=%s",
-		host, user, password, dbName, port, sslmode,
-	)
 	var err error
-	DB, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	DB, err = sqlx.Connect("postgres", dsn)
 	if err != nil {
 		log.Fatalf("❌ Gagal konek ke database: %v", err)
 	}
 
-	fmt.Println("✅ Berhasil konek ke PostgreSQL")
+	log.Println("✅ Berhasil konek ke database")
+}
 
-	fmt.Println("📦 Running migrations...")
-	err = DB.AutoMigrate(&models.User{})
-	if err != nil {
-		log.Fatalf("❌ Gagal migrasi database: %v", err)
-	}
-	fmt.Println("✅ Migrations completed!")
+func buildDSN(env string) string {
+	host := os.Getenv("DB_HOST")
+	port := os.Getenv("DB_PORT")
+	user := os.Getenv("DB_USER")
+	password := os.Getenv("DB_PASSWORD")
+	dbname := os.Getenv("DB_NAME")
+	sslmode := os.Getenv("DB_SSLMODE")
+
+	return fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
+		host, port, user, password, dbname, sslmode,
+	)
 }

@@ -1,50 +1,11 @@
-// package middleware
-
-// import (
-//     "github.com/gofiber/fiber/v2"
-//     "github.com/golang-jwt/jwt/v4"
-//     "os"
-//     "strings"
-// )
-
-// // CustomClaims untuk JWT
-// type CustomClaims struct {
-//     Email      string `json:"email"`
-//     Permission string `json:"permission"`
-//     jwt.StandardClaims
-// }
-
-// func AdminOnly(c *fiber.Ctx) error {
-//     authHeader := c.Get("Authorization")
-//     if authHeader == "" {
-//         return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"message": "Unauthorized"})
-//     }
-
-//     tokenString := strings.TrimPrefix(authHeader, "Bearer ")
-
-//     token, err := jwt.ParseWithClaims(tokenString, &CustomClaims{}, func(token *jwt.Token) (interface{}, error) {
-//         return []byte(os.Getenv("JWT_SECRET")), nil
-//     })
-
-//     if err != nil || !token.Valid {
-//         return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"message": "Invalid token"})
-//     }
-
-//     claims, ok := token.Claims.(*CustomClaims)
-//     if !ok || claims.Permission != "admin" {
-//         return c.Status(fiber.StatusForbidden).JSON(fiber.Map{"message": "Forbidden: Anda bukan admin"})
-//     }
-
-//     return c.Next()
-// }
-
 package middleware
 
 import (
+	"context"
+	"net/http"
 	"os"
 	"strings"
 
-	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v4"
 )
 
@@ -54,51 +15,34 @@ type CustomClaims struct {
 	Permission string `json:"permission"`
 	jwt.StandardClaims
 }
-func AuthMiddleware(c *fiber.Ctx) error {
-	authHeader := c.Get("Authorization")
-	if authHeader == "" {
-		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"message": "Unauthorized"})
-	}
 
-	tokenString := strings.TrimPrefix(authHeader, "Bearer ")
+// Middleware yang menyisipkan user_id ke context
+func AuthMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		authHeader := r.Header.Get("Authorization")
+		if authHeader == "" {
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
 
-	token, err := jwt.ParseWithClaims(tokenString, &CustomClaims{}, func(token *jwt.Token) (interface{}, error) {
-		return []byte(os.Getenv("JWT_SECRET")), nil
+		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
+
+		token, err := jwt.ParseWithClaims(tokenString, &CustomClaims{}, func(token *jwt.Token) (interface{}, error) {
+			return []byte(os.Getenv("JWT_SECRET")), nil
+		})
+		if err != nil || !token.Valid {
+			http.Error(w, "Invalid token", http.StatusUnauthorized)
+			return
+		}
+
+		claims, ok := token.Claims.(*CustomClaims)
+		if !ok {
+			http.Error(w, "Invalid claims", http.StatusUnauthorized)
+			return
+		}
+
+		// Sisipkan user_id ke context
+		ctx := context.WithValue(r.Context(), "user_id", claims.UserID)
+		next.ServeHTTP(w, r.WithContext(ctx))
 	})
-
-	if err != nil || !token.Valid {
-		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"message": "Invalid token"})
-	}
-
-	claims, ok := token.Claims.(*CustomClaims)
-	if !ok {
-		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"message": "Invalid claims"})
-	}
-	c.Locals("user_id", claims.UserID)
-
-	return c.Next()
-}
-
-func AdminOnly(c *fiber.Ctx) error {
-	authHeader := c.Get("Authorization")
-	if authHeader == "" {
-		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"message": "Unauthorized"})
-	}
-
-	tokenString := strings.TrimPrefix(authHeader, "Bearer ")
-
-	token, err := jwt.ParseWithClaims(tokenString, &CustomClaims{}, func(token *jwt.Token) (interface{}, error) {
-		return []byte(os.Getenv("JWT_SECRET")), nil
-	})
-
-	if err != nil || !token.Valid {
-		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"message": "Invalid token"})
-	}
-
-	claims, ok := token.Claims.(*CustomClaims)
-	if !ok || claims.Permission != "admin" {
-		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{"message": "Forbidden: Anda bukan admin"})
-	}
-
-	return c.Next()
 }
