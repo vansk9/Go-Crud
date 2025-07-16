@@ -61,8 +61,9 @@ func serveApp(cmd *cobra.Command, args []string) {
 
 	port := os.Getenv("PORT")
 	if port == "" {
-		port = "3000"
+		log.Fatal("PORT is not set") // fail fast
 	}
 	log.Printf("🚀 Server running on :%s\n", port)
 	log.Fatal(http.ListenAndServe(":"+port, mux))
+
 }
