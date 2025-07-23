@@ -1,13 +1,10 @@
-package models
-
-import "gorm.io/gorm"
+package model
 
 type Product struct {
-	gorm.Model
-	Name        string  `json:"name"`
-	Description string  `json:"description"`
-	Quantity    int     `json:"quantity"`
-	Price       float64 `json:"price"`
-	Color       string  `json:"color"`
-	Size        string  `json:"size"`
+	Name        string  `db:"name" json:"name"`
+	Description string  `db:"description" json:"description"`
+	Quantity    int     `db:"quantity" json:"quantity"`
+	Price       float64 `db:"price" json:"price"`
+	Color       string  `db:"color" json:"color"`
+	Size        string  `db:"size" json:"size"`
 }

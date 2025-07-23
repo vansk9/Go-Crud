@@ -25,5 +25,6 @@ go.work
 .idea/
 *.rest
 
-# Environment Variables
+# Ignore environment variables
 .env
+.env.*

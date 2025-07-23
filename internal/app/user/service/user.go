@@ -3,16 +3,21 @@ package service
 import (
 	"context"
 	"errors"
-	"go-fiber-api/internal/app/user/model"
 	"go-fiber-api/internal/app/user/repository"
 	"go-fiber-api/internal/shared/dto"
-	"go-fiber-api/utils"
+	"net/http"
+
+	// "go-fiber-api/utils"
+	utils "go-fiber-api/utils/jwt"
+	"go-fiber-api/utils/web"
 	"log/slog"
 	"strings"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
 type User interface {
-	Register(ctx context.Context, req *dto.RegisterRequest) (*dto.UserResponse, error)
+	// Register(ctx context.Context, req *dto.RegisterRequest) (*dto.UserResponse, error)
 	Login(ctx context.Context, req *dto.LoginRequest) (*dto.LoginResponse, error)
 }
 
@@ -26,59 +31,55 @@ func NewUserService(repo repository.User) User {
 	}
 }
 
-func (s *userService) Register(ctx context.Context, req *dto.RegisterRequest) (*dto.UserResponse, error) {
-	existing, err := s.repo.FindByEmail(ctx, req.Email)
-	if err == nil && existing != nil {
-		return nil, errors.New("email sudah terdaftar")
-	}
+// func (s *userService) Register(ctx context.Context, req *dto.RegisterRequest) (*dto.UserResponse, error) {
+// 	existing, err := s.repo.FindByEmail(ctx, req.Email)
+// 	if err == nil && existing != nil {
+// 		return nil, errors.New("email sudah terdaftar")
+// 	}
 
-	hashed, err := utils.HashPassword(req.Password)
-	if err != nil {
-		return nil, errors.New("gagal hash password")
-	}
+// 	hashed, err := utils.HashPassword(req.Password)
+// 	if err != nil {
+// 		return nil, errors.New("gagal hash password")
+// 	}
 
-	user := &model.User{
-		Username:    req.Username,
-		Email:       strings.ToLower(req.Email),
-		Password:    hashed,
-		PhoneNumber: req.PhoneNumber,
-		DateOfBirth: req.DateOfBirth,
-		Role:        req.Role,
-	}
+// 	user := &model.User{
+// 		Username:    req.Username,
+// 		Email:       strings.ToLower(req.Email),
+// 		Password:    hashed,
+// 		PhoneNumber: req.PhoneNumber,
+// 		DateOfBirth: req.DateOfBirth,
+// 		Role:        req.Role,
+// 	}
 
-	if err := s.repo.Create(ctx, user); err != nil {
-		return nil, err
-	}
+// 	if err := s.repo.Create(ctx, user); err != nil {
+// 		return nil, err
+// 	}
 
-	return &dto.UserResponse{
-		ID:          user.ID,
-		Username:    user.Username,
-		Email:       user.Email,
-		PhoneNumber: user.PhoneNumber,
-		DateOfBirth: user.DateOfBirth,
-		Role:        user.Role,
-	}, nil
-}
+// 	return &dto.UserResponse{
+// 		ID:          user.ID,
+// 		Username:    user.Username,
+// 		Email:       user.Email,
+// 		PhoneNumber: user.PhoneNumber,
+// 		DateOfBirth: req.DateOfBirth,
+// 		Role:        user.Role,
+// 	}, nil
+// }
 
 func (s *userService) Login(ctx context.Context, req *dto.LoginRequest) (*dto.LoginResponse, error) {
 	slog.Info("Login attempt", "email", req.Email)
 
 	user, err := s.repo.FindByEmail(ctx, req.Email)
 	if err != nil {
-		slog.Warn("User not found during login", "email", req.Email, "error", err)
-		return nil, errors.New("email atau password salah")
-	}
-	if user == nil {
-		slog.Warn("Email tidak ditemukan", "email", req.Email)
+		slog.Warn("Gagal menemukan user saat login", "email", req.Email, "error", err)
 		return nil, errors.New("email atau password salah")
 	}
 
-	if err := utils.CheckPassword(req.Password, user.Password); err != nil {
-		slog.Warn("Password salah", "email", req.Email)
-		return nil, errors.New("email atau password salah")
+	// Check password
+	if bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password)) != nil {
+		slog.Info("Login failed - wrong password", "userID", user.ID)
+		return nil, web.NewHTTPError(http.StatusUnauthorized, "Password Incorrect", web.ErrPasswordIncorrect)
 	}
 
-	// Pastikan ID-nya bertipe uint (jika dari DB bertipe int64)
 	userID := uint(user.ID)
 
 	token, err := utils.GenerateJWT(userID, user.Role)
@@ -87,7 +88,7 @@ func (s *userService) Login(ctx context.Context, req *dto.LoginRequest) (*dto.Lo
 		return nil, errors.New("gagal membuat token")
 	}
 
-	slog.Info("Login sukses", "user_id", userID, "role", user.Role)
+	slog.Info("Login berhasil", "user_id", userID, "role", user.Role)
 
 	return &dto.LoginResponse{
 		Token: token,

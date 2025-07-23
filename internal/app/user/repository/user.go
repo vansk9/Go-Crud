@@ -9,7 +9,7 @@ import (
 
 type User interface {
 	FindByEmail(ctx context.Context, email string) (*model.User, error)
-	Create(ctx context.Context, user *model.User) error
+	// Create(ctx context.Context, user *model.User) error
 }
 
 type userRepo struct {
@@ -32,24 +32,24 @@ func (r *userRepo) FindByEmail(ctx context.Context, email string) (*model.User, 
 	return &user, nil
 }
 
-func (r *userRepo) Create(ctx context.Context, user *model.User) error {
-	query := `
-		INSERT INTO users (username, email, password, phone_number, date_of_birth, role)
-		VALUES (:username, :email, :password, :phone_number, :date_of_birth, :role)
-		RETURNING id
-	`
+// func (r *userRepo) Create(ctx context.Context, user *model.User) error {
+// 	query := `
+// 		INSERT INTO users (username, email, password, phone_number, date_of_birth, role)
+// 		VALUES (:username, :email, :password, :phone_number, :date_of_birth, :role)
+// 		RETURNING id
+// 	`
 
-	rows, err := r.db.NamedQueryContext(ctx, query, user)
-	if err != nil {
-		return err
-	}
-	defer rows.Close()
+// 	rows, err := r.db.NamedQueryContext(ctx, query, user)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	defer rows.Close()
 
-	if rows.Next() {
-		if err := rows.Scan(&user.ID); err != nil {
-			return err
-		}
-	}
+// 	if rows.Next() {
+// 		if err := rows.Scan(&user.ID); err != nil {
+// 			return err
+// 		}
+// 	}
 
-	return nil
-}
+// 	return nil
+// }

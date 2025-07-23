@@ -2,6 +2,8 @@ package utils
 
 import (
 	"errors"
+	"go-fiber-api/internal/shared/dto"
+	"log/slog"
 	"os"
 	"time"
 
@@ -56,4 +58,36 @@ func GetClaims(authHeader string) (*JWTClaims, error) {
 	}
 
 	return claims, nil
+}
+
+func ParseJWTToken(tokenString string) (*dto.JWTClaims, error) {
+	if tokenString == "" {
+		return nil, errors.New("invalid token")
+	}
+
+	secret := GetJWTSecret()
+	slog.Info("Parsing JWT token", "token", tokenString)
+
+	claims := &dto.JWTClaims{}
+	token, err := jwt.ParseWithClaims(tokenString, claims, func(t *jwt.Token) (interface{}, error) {
+		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, errors.New("unexpected signing method")
+		}
+		return []byte(secret), nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	if token.Valid {
+		return claims, nil
+	}
+
+	return nil, errors.New("invalid token")
+}
+
+func GetJWTSecret() string {
+	secret := os.Getenv("JWT_SECRET")
+	return secret
 }

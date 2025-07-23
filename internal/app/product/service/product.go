@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"errors"
+	"log/slog"
 
 	"go-fiber-api/internal/app/product/model"
 	"go-fiber-api/internal/app/product/repository"
@@ -11,8 +12,8 @@ import (
 
 type Product interface {
 	Create(ctx context.Context, req *dto.ProductRequest) (*dto.ProductResponse, error)
-	GetAll(ctx context.Context) ([]*dto.ProductResponse, error)
-	GetByID(ctx context.Context, id uint) (*dto.ProductResponse, error)
+	GetAllProducts(ctx context.Context) ([]*dto.ProductResponse, error)
+	GetProductsByID(ctx context.Context, id uint) (*dto.ProductResponse, error)
 	Update(ctx context.Context, id uint, req *dto.ProductRequest) (*dto.ProductResponse, error)
 	Delete(ctx context.Context, id uint) error
 }
@@ -26,6 +27,7 @@ func NewProductService(repo repository.Product) Product {
 }
 
 func (s *productService) Create(ctx context.Context, req *dto.ProductRequest) (*dto.ProductResponse, error) {
+	slog.Info("Creating product", "name", req.Name)
 
 	product := &model.Product{
 		Name:        req.Name,
@@ -37,9 +39,11 @@ func (s *productService) Create(ctx context.Context, req *dto.ProductRequest) (*
 	}
 
 	if err := s.repo.Create(ctx, product); err != nil {
+		slog.Error("Failed to create product", "error", err)
 		return nil, err
 	}
 
+	slog.Info("Product created successfully", "product_id", product.ID)
 	return &dto.ProductResponse{
 		ID:          product.ID,
 		Name:        product.Name,
@@ -51,9 +55,12 @@ func (s *productService) Create(ctx context.Context, req *dto.ProductRequest) (*
 	}, nil
 }
 
-func (s *productService) GetAll(ctx context.Context) ([]*dto.ProductResponse, error) {
-	products, err := s.repo.GetAll(ctx)
+func (s *productService) GetAllProducts(ctx context.Context) ([]*dto.ProductResponse, error) {
+	slog.Info("Fetching all products")
+
+	products, err := s.repo.GetAllProducts(ctx)
 	if err != nil {
+		slog.Error("Failed to fetch products", "error", err)
 		return nil, err
 	}
 
@@ -70,15 +77,20 @@ func (s *productService) GetAll(ctx context.Context) ([]*dto.ProductResponse, er
 		})
 	}
 
+	slog.Info("Fetched products successfully", "count", len(result))
 	return result, nil
 }
 
-func (s *productService) GetByID(ctx context.Context, id uint) (*dto.ProductResponse, error) {
-	product, err := s.repo.GetByID(ctx, id)
+func (s *productService) GetProductsByID(ctx context.Context, id uint) (*dto.ProductResponse, error) {
+	slog.Info("Fetching product by ID", "product_id", id)
+
+	product, err := s.repo.GetProductsByID(ctx, id)
 	if err != nil {
+		slog.Error("Failed to fetch product by ID", "product_id", id, "error", err)
 		return nil, err
 	}
 
+	slog.Info("Product found", "product_id", id)
 	return &dto.ProductResponse{
 		ID:          product.ID,
 		Name:        product.Name,
@@ -91,8 +103,11 @@ func (s *productService) GetByID(ctx context.Context, id uint) (*dto.ProductResp
 }
 
 func (s *productService) Update(ctx context.Context, id uint, req *dto.ProductRequest) (*dto.ProductResponse, error) {
-	product, err := s.repo.GetByID(ctx, id)
+	slog.Info("Updating product", "product_id", id)
+
+	product, err := s.repo.GetProductsByID(ctx, id)
 	if err != nil {
+		slog.Warn("Product not found", "product_id", id)
 		return nil, errors.New("product not found")
 	}
 
@@ -104,10 +119,11 @@ func (s *productService) Update(ctx context.Context, id uint, req *dto.ProductRe
 	product.Size = req.Size
 
 	if err := s.repo.Update(ctx, id, product); err != nil {
-
+		slog.Error("Failed to update product", "product_id", id, "error", err)
 		return nil, err
 	}
 
+	slog.Info("Product updated successfully", "product_id", id)
 	return &dto.ProductResponse{
 		ID:          product.ID,
 		Name:        product.Name,
@@ -120,5 +136,13 @@ func (s *productService) Update(ctx context.Context, id uint, req *dto.ProductRe
 }
 
 func (s *productService) Delete(ctx context.Context, id uint) error {
-	return s.repo.Delete(ctx, id)
+	slog.Info("Deleting product", "product_id", id)
+
+	if err := s.repo.Delete(ctx, id); err != nil {
+		slog.Error("Failed to delete product", "product_id", id, "error", err)
+		return err
+	}
+
+	slog.Info("Product deleted successfully", "product_id", id)
+	return nil
 }

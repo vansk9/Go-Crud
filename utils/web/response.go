@@ -11,12 +11,23 @@ import (
 )
 
 const (
-	ErrValidation     = 1001
-	ErrAuthentication = 1002
-	ErrPermission     = 1003
-	ErrNotFound       = 1004
-	ErrConflict       = 1005
-	ErrProcessing     = 1500
+	ErrValidation          = 1001
+	ErrAuthentication      = 1002
+	ErrPermission          = 1003
+	ErrNotFound            = 1004
+	ErrConflict            = 1005
+	ErrProcessing          = 1006
+	ErrForbidden           = 1007
+	ErrCartNotFound        = 2001
+	ErrCartAccessDenied    = 2002
+	ErrInvalidCartData     = 2003
+	ErrCartItemExists      = 2004
+	ErrCartEmpty           = 2005
+	ErrProductNotFound     = 2006
+	ErrInsufficientStock   = 2007
+	ErrCartLimitExceeded   = 2008
+	ErrInvalidQuantity     = 2009
+	ErrBulkOperationFailed = 2010
 )
 
 // Response adalah struktur standar untuk semua response API
