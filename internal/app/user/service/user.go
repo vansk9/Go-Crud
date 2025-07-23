@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"errors"
+	"go-fiber-api/internal/app/user/model"
 	"go-fiber-api/internal/app/user/repository"
 	"go-fiber-api/internal/shared/dto"
 	"net/http"
@@ -17,7 +18,7 @@ import (
 )
 
 type User interface {
-	// Register(ctx context.Context, req *dto.RegisterRequest) (*dto.UserResponse, error)
+	Register(ctx context.Context, req *dto.RegisterRequest) (*dto.UserResponse, error)
 	Login(ctx context.Context, req *dto.LoginRequest) (*dto.LoginResponse, error)
 }
 
@@ -31,39 +32,39 @@ func NewUserService(repo repository.User) User {
 	}
 }
 
-// func (s *userService) Register(ctx context.Context, req *dto.RegisterRequest) (*dto.UserResponse, error) {
-// 	existing, err := s.repo.FindByEmail(ctx, req.Email)
-// 	if err == nil && existing != nil {
-// 		return nil, errors.New("email sudah terdaftar")
-// 	}
+func (s *userService) Register(ctx context.Context, req *dto.RegisterRequest) (*dto.UserResponse, error) {
+	existing, err := s.repo.FindByEmail(ctx, req.Email)
+	if err == nil && existing != nil {
+		return nil, errors.New("email sudah terdaftar")
+	}
 
-// 	hashed, err := utils.HashPassword(req.Password)
-// 	if err != nil {
-// 		return nil, errors.New("gagal hash password")
-// 	}
+	hashed, err := utils.HashPassword(req.Password)
+	if err != nil {
+		return nil, errors.New("gagal hash password")
+	}
 
-// 	user := &model.User{
-// 		Username:    req.Username,
-// 		Email:       strings.ToLower(req.Email),
-// 		Password:    hashed,
-// 		PhoneNumber: req.PhoneNumber,
-// 		DateOfBirth: req.DateOfBirth,
-// 		Role:        req.Role,
-// 	}
+	user := &model.User{
+		Username:    req.Username,
+		Email:       strings.ToLower(req.Email),
+		Password:    hashed,
+		PhoneNumber: req.PhoneNumber,
+		DateOfBirth: req.DateOfBirth,
+		Role:        req.Role,
+	}
 
-// 	if err := s.repo.Create(ctx, user); err != nil {
-// 		return nil, err
-// 	}
+	if err := s.repo.Create(ctx, user); err != nil {
+		return nil, err
+	}
 
-// 	return &dto.UserResponse{
-// 		ID:          user.ID,
-// 		Username:    user.Username,
-// 		Email:       user.Email,
-// 		PhoneNumber: user.PhoneNumber,
-// 		DateOfBirth: req.DateOfBirth,
-// 		Role:        user.Role,
-// 	}, nil
-// }
+	return &dto.UserResponse{
+		ID:          user.ID,
+		Username:    user.Username,
+		Email:       user.Email,
+		PhoneNumber: user.PhoneNumber,
+		DateOfBirth: req.DateOfBirth,
+		Role:        user.Role,
+	}, nil
+}
 
 func (s *userService) Login(ctx context.Context, req *dto.LoginRequest) (*dto.LoginResponse, error) {
 	slog.Info("Login attempt", "email", req.Email)

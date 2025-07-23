@@ -19,4 +19,5 @@ type ProductResponse struct {
 	Price       float64 `json:"price"`
 	Color       string  `json:"color"`
 	Size        string  `json:"size"`
+	CreatedAt   string  `json:"created_at"`
 }
