@@ -1,15 +1,25 @@
-version: '3.8'
+version: "3.8"
 services:
-  go-crud:
+  app:
     build: .
     ports:
-      - "8080:8080"  # Sesuaikan dengan port aplikasi
-    restart: unless-stopped
-    volumes:
-      - ./data:/app/data  # Jika perlu volume
-volumes:
-  postgres_data:
+      - "8080:8080"
+    env_file:
+      - .env
+    depends_on:
+      - db
 
-networks:
-  app-network:
-    driver: bridge
+  db:
+    image: postgres:15
+    restart: always
+    environment:
+      POSTGRES_DB: goo
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: firgiawan3
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+volumes:
+  pgdata:
