@@ -1,24 +1,24 @@
-# Stage 1: Build binary
-FROM golang:1.21 AS builder
+# Stage 1 - Build
+FROM golang:1.23-alpine AS builder
+
 
 WORKDIR /app
 
-COPY go.mod ./
-COPY go.sum ./
+# Copy go mod & download deps
+COPY go.mod go.sum ./
 RUN go mod download
 
+# Copy semua source code
 COPY . .
 
-RUN go build -o app .
+# Build dari file yang ada di folder cmd
+RUN go build -o main ./cmd/main.go
 
-# Stage 2: Minimal runtime
-FROM debian:bullseye-slim
+# Stage 2 - Runtime
+FROM alpine:latest
 
 WORKDIR /app
 
-COPY --from=builder /app/app .
+COPY --from=builder /app/main .
 
-# Tidak perlu salin .env — akan dipasang saat runtime lewat docker-compose
-EXPOSE 8080
-
-CMD ["./app"]
+CMD ["./main", "serve"]
