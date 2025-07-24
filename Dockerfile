@@ -1,24 +1,24 @@
-# Stage 1 - Build
-FROM golang:1.23-alpine AS builder
-
+# Gunakan image golang untuk build
+FROM golang:1.21 AS builder
 
 WORKDIR /app
 
-# Copy go mod & download deps
-COPY go.mod go.sum ./
+COPY go.mod ./
+COPY go.sum ./
 RUN go mod download
 
-# Copy semua source code
 COPY . .
 
-# Build dari file yang ada di folder cmd
-RUN go build -o main ./cmd/main.go
+RUN go build -o app .
 
-# Stage 2 - Runtime
-FROM alpine:latest
+# Gunakan image minimal untuk menjalankan
+FROM debian:bullseye-slim
 
 WORKDIR /app
 
-COPY --from=builder /app/main .
+COPY --from=builder /app/app .
+COPY .env .
 
-CMD ["./main", "serve"]
+EXPOSE 8080
+
+CMD ["./app"]
