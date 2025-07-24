@@ -7,6 +7,7 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -17,14 +18,23 @@ jobs:
           host: ${{ secrets.SERVER_IP }}
           username: ${{ secrets.SERVER_USERNAME }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SERVER_PORT }} # opsional jika bukan 22
           script: |
             cd ${{ secrets.DEPLOY_PATH }}
+
+            # Reset & pull source
+            git fetch --all
+            git reset --hard origin/main
             git pull origin main
+
+            # Build & deploy dengan Docker
             docker build -t go-crud .
+
             docker stop go-crud || true
             docker rm go-crud || true
-            docker run -d --name go-crud -p 8080:8080 --restart unless-stopped go-crud
-            
-            # Jika pakai docker-compose:
-            # docker-compose down
-            # docker-compose up -d --build
+
+            docker run -d \
+              --name go-crud \
+              -p 8080:8080 \
+              --restart unless-stopped \
+              go-crud
