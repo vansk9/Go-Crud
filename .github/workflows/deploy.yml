@@ -51,12 +51,12 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-      - name: Install Railway CLI
-        uses: MadeByThePinsHub/setup-railway-cli-action@v0.1.0
-
-      - name: Deploy via Railway
-        run: railway up
+      - name: Deploy to Railway
+        uses: railwayapp/railway-action@v2
+        with:
+          command: up
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
