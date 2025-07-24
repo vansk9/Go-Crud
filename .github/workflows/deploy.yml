@@ -44,7 +44,7 @@ name: Deploy to Railway
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   deploy:
@@ -54,9 +54,10 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Deploy to Railway
+      - name: Setup Railway & Deploy
         uses: railwayapp/railway-action@v2
         with:
           command: up
         env:
+          # Railway CLI akan otomatis pick up token
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
