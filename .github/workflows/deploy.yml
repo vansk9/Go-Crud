@@ -58,12 +58,12 @@ jobs:
         # Optional: jika punya lebih dari satu service
         # SVC_ID: ${{ secrets.RAILWAY_SERVICE_ID }}
 
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
+    # steps:
+    #   - name: Checkout repository
+    #     uses: actions/checkout@v3
 
-      - name: Deploy to Railway
-        run: |
-          railway up
-          # Jika ingin spesifik service, gunakan:
-          # railway up --service $SVC_ID
+    #   - name: Deploy to Railway
+    #     run: |
+    #       railway up
+    #       # Jika ingin spesifik service, gunakan:
+    #       # railway up --service $SVC_ID
